@@ -63,3 +63,30 @@ void generateTransactions(vector<transaction> &trans, vector<user> &users) {
   }
   wf.close();
 }
+
+string mineBlock(vector<blockChain> bc, int b, int &n) {
+  int x;
+	string newhash;
+	if (b == 1)
+		bc.at(b).prevHash = hashing("");
+	else
+		bc.at(b).prevHash = bc.at(b-1).blocks.hash;
+
+  bc.at(b).timestamp = time(nullptr);
+	bc.at(b).version = "v" + to_string(b) + ".0";
+	bc.at(b).diff = "0";
+  
+  for (int i=0; i<100; i++)
+    bc.at(b).merkelRoot += bc.at(b).blocks.transactions.at(i).transactionId;
+
+	x = bc.at(b).diff.size();
+  srand((unsigned)time(0));
+  for (int i = 0; i < n; i++) {
+		bc.at(b).nonce = rand() % 1000000;
+		newhash = hashing(bc.at(b).diff + bc.at(b).merkelRoot + bc.at(b).prevHash + to_string(bc.at(b).timestamp) + bc.at(b).version + to_string(bc.at(b).nonce));
+		if (newhash.substr(1, x) == bc.at(b).diff)
+			return newhash;
+	}
+
+	return "0";
+}

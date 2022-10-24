@@ -27,21 +27,22 @@ struct transaction {
   double sum;
 };
 
-struct BlockChain {
+struct block {
+  string hash;
+  vector<transaction> transactions;
+};
+
+struct blockChain {
 	string prevHash;
 	int timestamp;
 	string version;
-	// string MerkelRoot[50];
+	string merkelRoot;
 	int nonce;
 	string diff;
-	vector<string> transactions;
-};
-
-struct block {
-  string hash;
-  vector<string> transactions;
+	block blocks;
 };
 
 
 void generateUsers(vector<user> &users);
 void generateTransactions(vector<transaction> &trans, vector<user> &users);
+string mineBlock(vector<blockChain> bc, int b, int &n);
