@@ -39,10 +39,15 @@ struct blockChain {
 	string merkelRoot;
 	int nonce;
 	string diff;
-	block blocks;
+	block block;
 };
 
 
 void generateUsers(vector<user> &users);
 void generateTransactions(vector<transaction> &trans, vector<user> &users);
-string mineBlock(vector<blockChain> bc, int b, int &n);
+string mineBlock(blockChain &bc, string prevHash, int b, int &n);
+void readUsers(vector<user> &con);
+void readTrans(vector<transaction> &con);
+void usersData(vector<user> users);
+void printBlock(blockChain bc);
+void printTrans(transaction t);

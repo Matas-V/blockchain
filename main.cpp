@@ -7,15 +7,20 @@ int main() {
   vector<user> users;
   vector<transaction> trans;
   vector<blockChain> bc;
+  bc.reserve(100);
+  random_device rd;
+  mt19937 gen(rd());
 
-  generateUsers(users);
-  generateTransactions(trans, users);
+  // generateUsers(users);
+  // generateTransactions(trans, users);
+  // printTrans(trans.at(99));
+  readUsers(users);
+  readTrans(trans);
 
-  while (trans.size()) {
-    random_device rd;
-    mt19937 gen(rd());
-    while (bc.at(b).blocks.transactions.size() != 100 && trans.size()) {
-      uniform_int_distribution<> distr(0, trans.size());
+  while (trans.size() != 0) {
+    blockChain newBC;
+    while (newBC.block.transactions.size() != 100 && trans.size()) {
+      uniform_int_distribution<> distr(0, trans.size()-1);
       int random = distr(gen), j;
 
       for (j = 0; j < 1000; j++)
@@ -23,26 +28,21 @@ int main() {
           break;
 
       if (trans.at(random).sum <= users.at(j).balance) {
-        bc.at(b).blocks.transactions.push_back(trans.at(random));
-        trans.erase(trans.begin()+random-1);
+        newBC.block.transactions.push_back(trans.at(random));
+        trans.erase(trans.begin()+random);
       } else {
-        trans.erase(trans.begin()+random-1);
+        trans.erase(trans.begin()+random);
       }
     }
+    b++;
+    if (b==1) newBC.block.hash = mineBlock(newBC, "", b, r);
+    else newBC.block.hash = mineBlock(newBC, bc.at(b-2).block.hash, b, r);
 
-    if (bc.at(b).blocks.transactions.size() == 100)
-      b++;
+    bc.push_back(newBC);
+    cout << "new hash : " << bc.at(b-1).block.hash << endl;
+    cout << "prev hash:  " << bc.at(b-1).prevHash << endl; 
 
-    temp = "0";
-    while (temp == "0") {
-			for (int i = 0; i < 5; i++) {
-				temp = mineBlock(bc, b, r);
-			}
-      r *= 2;
-		}
-    cout << temp << endl;
-
-    for (auto tran : bc.at(b).blocks.transactions) {
+    for (auto tran : bc.at(b-1).block.transactions) {
       int send = 0, get = 0;
       for (int i = 0; i < 1000; i++) {
 				if (users.at(i).public_key == tran.sender)
@@ -55,9 +55,11 @@ int main() {
 
       users.at(send).balance -= tran.sum;
       users.at(get).balance += tran.sum;
-
     }
   }
+
+  usersData(users);
+  printBlock(bc.at(3));
 
   return 0;
 }
