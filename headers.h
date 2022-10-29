@@ -51,3 +51,4 @@ void readTrans(vector<transaction> &con);
 void usersData(vector<user> users);
 void printBlock(blockChain bc);
 void printTrans(transaction t);
+string generateMerkleRoot(vector<transaction> trans);

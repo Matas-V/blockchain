@@ -17,7 +17,7 @@ int main() {
   readUsers(users);
   readTrans(trans);
 
-  while (trans.size() != 0) {
+  while (trans.size() >= 9500) {
     blockChain newBC;
     while (newBC.block.transactions.size() != 100 && trans.size()) {
       uniform_int_distribution<> distr(0, trans.size()-1);

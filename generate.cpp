@@ -78,8 +78,8 @@ string mineBlock(blockChain &bc, string prevHash, int b, int &n) {
 	bc.version = "v" + to_string(b) + ".0";
 	bc.diff = "00";
   
-  for (int i=0; i<100; i++)
-    bc.merkelRoot += bc.block.transactions.at(i).transactionId;
+  bc.merkelRoot = generateMerkleRoot(bc.block.transactions);
+  cout << "MERKLE ->>> " << bc.merkelRoot << endl;
 
 	x = bc.diff.size();
   string temp = "0";
@@ -163,4 +163,39 @@ void printBlock(blockChain bc) {
   cout << "Mined on: " << unixTimeToHumanReadable(bc.timestamp) << endl;
   cout << "Difficulty: " << bc.diff << endl;
   cout << "---------------------------------------------------------" << endl;
+}
+
+string generateMerkleRoot(vector<transaction> trans) {
+  vector<string> merkel, merkel2;
+  string word, hash;
+
+  for(unsigned int i = 0; i < trans.size(); i++) {
+    merkel.push_back(trans.at(i).transactionId);
+  }
+
+  while (merkel.size() > 1) {
+    if (merkel.size() % 2 == 0) {
+      for (unsigned i = 0; i < merkel.size(); i+=2) {
+        word = merkel.at(i) + merkel.at(i+1);
+        hash = hashing(word);
+        merkel2.push_back(hash);
+      }
+    } else {
+      for (unsigned i = 0; i < merkel.size() - 1; i+=2) {
+        word = merkel.at(i) + merkel.at(i+1);
+        hash = hashing(word);
+        merkel2.push_back(hash);
+      } 
+
+      word = merkel.at(merkel.size()-1);
+      hash = hashing(word);
+      merkel2.push_back(hash);
+    }
+
+    merkel.clear();
+    merkel = merkel2;
+    merkel2.clear();
+  }
+
+  return merkel.at(0);
 }
