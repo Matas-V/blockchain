@@ -74,7 +74,6 @@ string mineBlock(blockChain &bc, string prevHash, int b, int n) {
 	else
 		bc.prevHash = prevHash;
 
-  bc.timestamp = time(nullptr);
 	bc.version = "v" + to_string(b+1) + ".0";
 	bc.diff = "000";
   
@@ -86,6 +85,7 @@ string mineBlock(blockChain &bc, string prevHash, int b, int n) {
     newhash = hashing(bc.diff + bc.merkelRoot + bc.prevHash + to_string(bc.timestamp) + bc.version + to_string(nonce));
 		if (newhash.substr(0, x) == bc.diff) {
       bc.nonce = nonce;
+      bc.timestamp = time(nullptr);
 			return newhash;
     }
     nonce++;

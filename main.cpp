@@ -1,8 +1,10 @@
 #include "headers.h"
 #include "generate.cpp"
 
+#define THREAD_NUM 5
+
 int main() {
-  int b = 0, r = 10000;
+  int r = 10000;
   bool stop = 0;
   string temp;
   vector<user> users;
@@ -11,6 +13,8 @@ int main() {
   bc.reserve(100);
   random_device rd;
   mt19937 gen(rd());
+
+  omp_set_num_threads(THREAD_NUM);
 
   // generateUsers(users);
   // generateTransactions(trans, users);
@@ -38,60 +42,45 @@ int main() {
       }
     }
     bc.push_back(newBC);
-    b++;
   }
 
-  vector<int> set{0,1,2,3,4};
-  int next = 0, limit = 20000, mined = 0;
-  while (!stop) {
-    uniform_int_distribution<> distr(0, set.size()-1);
-    int rand = distr(gen), r;
-    r = set.at(rand);
-    set.erase(set.begin()+rand);
+  int limit = 20000, mined = 0;
 
-    if (next == 0) bc.at(next).block.hash = mineBlock(bc.at(next), "", next, limit);
-    else bc.at(next).block.hash = mineBlock(bc.at(next), bc.at(next-1).block.hash, next, limit);
+  #pragma omp parallel
+  {
+    bool stop=0;
+    while(!stop) {
+      bc.at(omp_get_thread_num()).block.hash = mineBlock(bc.at(omp_get_thread_num()), "", 0, limit);
 
-    if (bc.at(next).block.hash.length() > 1) {
-      mined++;
-      cout << "new hash : " << bc.at(next).block.hash << endl;
-      cout << "prev hash: " << bc.at(next).prevHash << endl << endl; 
+      if (bc.at(omp_get_thread_num()).block.hash.length() > 1) {
+        mined++;
+        cout << "new hash : " << bc.at(omp_get_thread_num()).block.hash << endl;
+        cout << "prev hash: " << bc.at(omp_get_thread_num()).prevHash << endl << endl; 
 
-      for (auto tran : bc.at(next).block.transactions) {
-        int send = 0, get = 0;
-        for (int i = 0; i < 1000; i++) {
-          if (users.at(i).public_key == tran.sender)
-            send = i;
-          else if (users.at(i).public_key == tran.receiver)
-            get = i;
-          if (send != 0 && get != 0)
-            break;
+        for (auto tran : bc.at(omp_get_thread_num()).block.transactions) {
+          int send = 0, get = 0;
+          for (int i = 0; i < 1000; i++) {
+            if (users.at(i).public_key == tran.sender)
+              send = i;
+            else if (users.at(i).public_key == tran.receiver)
+              get = i;
+            if (send != 0 && get != 0)
+              break;
+          }
+
+          if (users.at(send).balance >= tran.sum) {
+            users.at(send).balance -= tran.sum;
+            users.at(get).balance += tran.sum;
+          }
         }
-
-        users.at(send).balance -= tran.sum;
-        users.at(get).balance += tran.sum;
-      }
-
-      next++;
-      if (mined == 5)
         stop = 1;
-    } else {
-      if (mined > 0)
-        stop = 1;
-      else {
+      } else 
         limit *= 2;
-        mined = 0;
-        next = 0;
-      }
     }
+    printBlock(bc.at(omp_get_thread_num()));
   }
 
   usersData(users);
-
-  for (int i=0; i<5; i++)
-    if (bc.at(i).block.hash != "0")
-      printBlock(bc.at(i));
-
   cout << "MINED " << mined << endl;
   cout << "LIMIT " << limit << endl;
 

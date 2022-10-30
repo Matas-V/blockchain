@@ -9,6 +9,10 @@
 #include <iomanip>
 #include <bitset>
 #include <sstream>
+#include <omp.h>
+#include <cstdlib>
+#include <ctime>
+#include <unistd.h>
 using namespace std;
 
 const int MIN_VALUE = 1000;
