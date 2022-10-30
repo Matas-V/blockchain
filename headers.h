@@ -45,7 +45,7 @@ struct blockChain {
 
 void generateUsers(vector<user> &users);
 void generateTransactions(vector<transaction> &trans, vector<user> &users);
-string mineBlock(blockChain &bc, string prevHash, int b, int &n);
+string mineBlock(blockChain &bc, string prevHash, int b, int n);
 void readUsers(vector<user> &con);
 void readTrans(vector<transaction> &con);
 void usersData(vector<user> users);
