@@ -9,6 +9,10 @@
 #include <iomanip>
 #include <bitset>
 #include <sstream>
+#include <omp.h>
+#include <cstdlib>
+#include <ctime>
+#include <unistd.h>
 using namespace std;
 
 const int MIN_VALUE = 1000;
@@ -45,10 +49,10 @@ struct blockChain {
 
 void generateUsers(vector<user> &users);
 void generateTransactions(vector<transaction> &trans, vector<user> &users);
-string mineBlock(blockChain &bc, string prevHash, int b, int n);
+string mineBlock(blockChain &bc, string prevHash, int b, int nonce);
 void readUsers(vector<user> &con);
 void readTrans(vector<transaction> &con);
 void usersData(vector<user> users);
-void printBlock(blockChain bc);
+void printBlock(blockChain bc, int nr);
 void printTrans(transaction t);
 string generateMerkleRoot(vector<transaction> trans);

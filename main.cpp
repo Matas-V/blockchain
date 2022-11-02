@@ -1,8 +1,10 @@
 #include "headers.h"
 #include "generate.cpp"
 
+#define THREAD_NUM 5
+
 int main() {
-  int b = 0, r = 10000;
+  int who;
   bool stop = 0;
   string temp;
   vector<user> users;
@@ -12,6 +14,8 @@ int main() {
   random_device rd;
   mt19937 gen(rd());
 
+  omp_set_num_threads(THREAD_NUM);
+
   // generateUsers(users);
   // generateTransactions(trans, users);
   // printTrans(trans.at(99));
@@ -19,6 +23,7 @@ int main() {
   readTrans(trans);
 
   for (int i=0; i<5; i++) {
+    stop = 0;
     blockChain newBC;
     while (newBC.block.transactions.size() != 100 && trans.size()) {
       uniform_int_distribution<> distr(0, trans.size()-1);
@@ -38,62 +43,73 @@ int main() {
       }
     }
     bc.push_back(newBC);
-    b++;
   }
 
-  vector<int> set{0,1,2,3,4};
-  int next = 0, limit = 20000, mined = 0;
-  while (!stop) {
-    uniform_int_distribution<> distr(0, set.size()-1);
-    int rand = distr(gen), r;
-    r = set.at(rand);
-    set.erase(set.begin()+rand);
-
-    if (next == 0) bc.at(next).block.hash = mineBlock(bc.at(next), "", next, limit);
-    else bc.at(next).block.hash = mineBlock(bc.at(next), bc.at(next-1).block.hash, next, limit);
-
-    if (bc.at(next).block.hash.length() > 1) {
-      mined++;
-      cout << "new hash : " << bc.at(next).block.hash << endl;
-      cout << "prev hash: " << bc.at(next).prevHash << endl << endl; 
-
-      for (auto tran : bc.at(next).block.transactions) {
-        int send = 0, get = 0;
-        for (int i = 0; i < 1000; i++) {
-          if (users.at(i).public_key == tran.sender)
-            send = i;
-          else if (users.at(i).public_key == tran.receiver)
-            get = i;
-          if (send != 0 && get != 0)
+  int limit = 50000, mined = 0;
+  while(mined != 5) {
+    stop = 0;
+    #pragma omp parallel num_threads(THREAD_NUM) shared(mined, stop, bc)
+    {
+      int nonce = limit * omp_get_thread_num();
+      string temp;
+      bc.at(mined).version = "v" + to_string(mined+1) + ".0";
+      bc.at(mined).diff = "000";
+      bc.at(mined).merkelRoot = generateMerkleRoot(bc.at(mined).block.transactions);
+      if (mined == 0) {
+        for (int i=0; i<limit * omp_get_thread_num(); i++) {
+          if (stop)
             break;
+          temp = mineBlock(bc.at(mined), "", mined, nonce);
+          if (temp.size() > 2) {
+            bc.at(mined).block.hash = temp;
+            stop = 1;
+            bc.at(mined).nonce = nonce;
+            who = omp_get_thread_num();
+            break;
+          }
+          nonce++;
         }
-
-        users.at(send).balance -= tran.sum;
-        users.at(get).balance += tran.sum;
+      } else {
+        for (int i=0; i<limit * omp_get_thread_num(); i++) {
+          if (stop)
+            break;
+          temp = mineBlock(bc.at(mined), bc.at(mined-1).block.hash, mined, nonce);
+          if (temp.size() > 2) {
+            bc.at(mined).block.hash = temp;
+            stop = 1;
+            bc.at(mined).nonce = nonce;
+            who = omp_get_thread_num();
+            break;
+          }
+          nonce++;
+        }
       }
 
-      next++;
-      if (mined == 5)
-        stop = 1;
-    } else {
-      if (mined > 0)
-        stop = 1;
-      else {
-        limit *= 2;
-        mined = 0;
-        next = 0;
+      if (bc.at(mined).block.hash.length() > 1 && who == omp_get_thread_num()) {
+        cout << "MINED BY " << who << " THREAD" << endl;
+        for (auto tran : bc.at(mined).block.transactions) {
+          int send = 0, get = 0;
+          for (int i = 0; i < 1000; i++) {
+            if (users.at(i).public_key == tran.sender)
+              send = i;
+            else if (users.at(i).public_key == tran.receiver)
+              get = i;
+            if (send != 0 && get != 0)
+              break;
+          }
+
+          if (users.at(send).balance >= tran.sum) {
+            users.at(send).balance -= tran.sum;
+            users.at(get).balance += tran.sum;
+          }
+        }
+        printBlock(bc.at(mined), mined);
+        mined++;
       }
     }
   }
 
   usersData(users);
-
-  for (int i=0; i<5; i++)
-    if (bc.at(i).block.hash != "0")
-      printBlock(bc.at(i));
-
-  cout << "MINED " << mined << endl;
-  cout << "LIMIT " << limit << endl;
 
   return 0;
 }

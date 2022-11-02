@@ -66,7 +66,7 @@ void generateTransactions(vector<transaction> &trans, vector<user> &users) {
   wf.close();
 }
 
-string mineBlock(blockChain &bc, string prevHash, int b, int n) {
+string mineBlock(blockChain &bc, string prevHash, int b, int nonce) {
   int x;
 	string newhash;
 	if (b == 0)
@@ -74,22 +74,23 @@ string mineBlock(blockChain &bc, string prevHash, int b, int n) {
 	else
 		bc.prevHash = prevHash;
 
-  bc.timestamp = time(nullptr);
-	bc.version = "v" + to_string(b+1) + ".0";
-	bc.diff = "000";
+	// bc.version = "v" + to_string(b+1) + ".0";
+	// bc.diff = "000";
   
-  bc.merkelRoot = generateMerkleRoot(bc.block.transactions);
+  // bc.merkelRoot = generateMerkleRoot(bc.block.transactions);
 
 	x = bc.diff.size();
-  int nonce=0;
-  for (int i=0; i<n; i++) {
-    newhash = hashing(bc.diff + bc.merkelRoot + bc.prevHash + to_string(bc.timestamp) + bc.version + to_string(nonce));
-		if (newhash.substr(0, x) == bc.diff) {
-      bc.nonce = nonce;
-			return newhash;
-    }
-    nonce++;
+  // if (!bc.nonce) {
+  //   bc.nonce = n - 50000;
+  // }
+  // int nonce = n - 50000;
+  newhash = hashing(bc.diff + bc.merkelRoot + bc.prevHash + to_string(bc.timestamp) + bc.version + to_string(nonce));
+  if (newhash.substr(0, x) == bc.diff) {
+    // bc.nonce = nonce;
+    bc.timestamp = time(nullptr);
+    return newhash;
   }
+  // bc.nonce++;
 
   return "0";
 }
@@ -151,8 +152,8 @@ void printTrans(transaction t) {
   cout << "---------------------------------------------------------" << endl;
 }
 
-void printBlock(blockChain bc) {
-  cout << "------------------------- BLOCK -------------------------" << endl;
+void printBlock(blockChain bc, int nr) {
+  cout << "------------------------- #" << nr+1 << " BLOCK -------------------------" << endl;
   cout << "Block hash: " << bc.block.hash << endl;
   cout << "Previous block hash: " << bc.prevHash << endl;
   cout << "Version: " << bc.version << endl;
@@ -160,7 +161,7 @@ void printBlock(blockChain bc) {
   cout << "Nonce: " << bc.nonce << endl;
   cout << "Mined on: " << unixTimeToHumanReadable(bc.timestamp) << " (GMT+2)" << endl;
   cout << "Difficulty: " << bc.diff << endl;
-  cout << "---------------------------------------------------------" << endl;
+  cout << "----------------------------------------------------------" << endl;
 }
 
 string generateMerkleRoot(vector<transaction> trans) {
