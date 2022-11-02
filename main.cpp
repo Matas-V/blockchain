@@ -4,7 +4,7 @@
 #define THREAD_NUM 5
 
 int main() {
-  int r = 10000;
+  int who;
   bool stop = 0;
   string temp;
   vector<user> users;
@@ -23,6 +23,7 @@ int main() {
   readTrans(trans);
 
   for (int i=0; i<5; i++) {
+    stop = 0;
     blockChain newBC;
     while (newBC.block.transactions.size() != 100 && trans.size()) {
       uniform_int_distribution<> distr(0, trans.size()-1);
@@ -44,20 +45,49 @@ int main() {
     bc.push_back(newBC);
   }
 
-  int limit = 20000, mined = 0;
+  int limit = 50000, mined = 0;
+  while(mined != 5) {
+    stop = 0;
+    #pragma omp parallel num_threads(THREAD_NUM) shared(mined, stop, bc)
+    {
+      int nonce = limit * omp_get_thread_num();
+      string temp;
+      bc.at(mined).version = "v" + to_string(mined+1) + ".0";
+      bc.at(mined).diff = "000";
+      bc.at(mined).merkelRoot = generateMerkleRoot(bc.at(mined).block.transactions);
+      if (mined == 0) {
+        for (int i=0; i<limit * omp_get_thread_num(); i++) {
+          if (stop)
+            break;
+          temp = mineBlock(bc.at(mined), "", mined, nonce);
+          if (temp.size() > 2) {
+            bc.at(mined).block.hash = temp;
+            stop = 1;
+            bc.at(mined).nonce = nonce;
+            who = omp_get_thread_num();
+            break;
+          }
+          nonce++;
+        }
+      } else {
+        for (int i=0; i<limit * omp_get_thread_num(); i++) {
+          if (stop)
+            break;
+          temp = mineBlock(bc.at(mined), bc.at(mined-1).block.hash, mined, nonce);
+          if (temp.size() > 2) {
+            bc.at(mined).block.hash = temp;
+            stop = 1;
+            bc.at(mined).nonce = nonce;
+            who = omp_get_thread_num();
+            break;
+          }
+          nonce++;
+        }
+      }
 
-  #pragma omp parallel
-  {
-    bool stop=0;
-    while(!stop) {
-      bc.at(omp_get_thread_num()).block.hash = mineBlock(bc.at(omp_get_thread_num()), "", 0, limit);
-
-      if (bc.at(omp_get_thread_num()).block.hash.length() > 1) {
-        mined++;
-        cout << "new hash : " << bc.at(omp_get_thread_num()).block.hash << endl;
-        cout << "prev hash: " << bc.at(omp_get_thread_num()).prevHash << endl << endl; 
-
-        for (auto tran : bc.at(omp_get_thread_num()).block.transactions) {
+      if (bc.at(mined).block.hash.length() > 1 && who == omp_get_thread_num()) {
+        cout << "MINED BY " << who << " THREAD" << endl;
+        for (auto tran : bc.at(mined).block.transactions) {
           int send = 0, get = 0;
           for (int i = 0; i < 1000; i++) {
             if (users.at(i).public_key == tran.sender)
@@ -73,16 +103,13 @@ int main() {
             users.at(get).balance += tran.sum;
           }
         }
-        stop = 1;
-      } else 
-        limit *= 2;
+        printBlock(bc.at(mined), mined);
+        mined++;
+      }
     }
-    printBlock(bc.at(omp_get_thread_num()));
   }
 
   usersData(users);
-  cout << "MINED " << mined << endl;
-  cout << "LIMIT " << limit << endl;
 
   return 0;
 }
