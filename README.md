@@ -1,11 +1,11 @@
 # Blokų grandinių 2 užduotis
 Centralizuota blokų grandinė
-## Įdiegimo ir naudojimosi instrukcija
+## Įdiegimo ir naudojimosi instrukcija (naudota ubuntu diegiant Libbitcoin biblioteką)
 - git clone https://github.com/Matas-V/blockchain/tree/v0.3.1
 - Įsirašyti Libbitcoin biblioteką
 - Atsidaryti projektą VS code aplinkoje
-- Konsolėje (CMD) parašyti komandą *g++ -std=c++11 -o main main.cpp $(pkg-config --cflags --libs libbitcoin-system)*
-- Konsolėje (CMD) paleisti sukompiliuotą main tipo programą su komanda *./main*
+- Konsolėje (WSL) parašyti komandą *g++ -std=c++11 -o main main.cpp $(pkg-config --cflags --libs libbitcoin-system)*
+- Konsolėje (WSL) paleisti sukompiliuotą main tipo programą su komanda *./main*
 ## Kaip veikia programa?
 - Sugeneruojama 1000 vartotojų
 - Sugeneruojama 10000 transakcijų
