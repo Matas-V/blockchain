@@ -1,3 +1,4 @@
+// g++ -std=c++11 -o main main.cpp $(pkg-config --cflags --libs libbitcoin-system)
 #include "headers.h"
 #include "generate.cpp"
 
@@ -20,7 +21,7 @@ int main() {
 
   for (int i=0; i<5; i++) {
     blockChain newBC;
-    while (newBC.block.transactions.size() != 100 && trans.size()) {
+    while (newBC.blockSTR.transactions.size() != 100 && trans.size()) {
       uniform_int_distribution<> distr(0, trans.size()-1);
       int random = distr(gen), j;
 
@@ -31,7 +32,7 @@ int main() {
       if (trans.at(random).sum <= users.at(j).balance &&
         trans.at(random).transactionId == hashing(trans.at(random).sender + trans.at(random).receiver + to_string(trans.at(random).sum))
       ) {
-        newBC.block.transactions.push_back(trans.at(random));
+        newBC.blockSTR.transactions.push_back(trans.at(random));
         trans.erase(trans.begin()+random);
       } else {
         trans.erase(trans.begin()+random);
@@ -49,15 +50,15 @@ int main() {
     r = set.at(rand);
     set.erase(set.begin()+rand);
 
-    if (next == 0) bc.at(next).block.hash = mineBlock(bc.at(next), "", next, limit);
-    else bc.at(next).block.hash = mineBlock(bc.at(next), bc.at(next-1).block.hash, next, limit);
+    if (next == 0) bc.at(next).blockSTR.hash = mineBlock(bc.at(next), "", next, limit);
+    else bc.at(next).blockSTR.hash = mineBlock(bc.at(next), bc.at(next-1).blockSTR.hash, next, limit);
 
-    if (bc.at(next).block.hash.length() > 1) {
+    if (bc.at(next).blockSTR.hash.length() > 1) {
       mined++;
-      cout << "new hash : " << bc.at(next).block.hash << endl;
+      cout << "new hash : " << bc.at(next).blockSTR.hash << endl;
       cout << "prev hash: " << bc.at(next).prevHash << endl << endl; 
 
-      for (auto tran : bc.at(next).block.transactions) {
+      for (auto tran : bc.at(next).blockSTR.transactions) {
         int send = 0, get = 0;
         for (int i = 0; i < 1000; i++) {
           if (users.at(i).public_key == tran.sender)
@@ -89,7 +90,7 @@ int main() {
   usersData(users);
 
   for (int i=0; i<5; i++)
-    if (bc.at(i).block.hash != "0")
+    if (bc.at(i).blockSTR.hash != "0")
       printBlock(bc.at(i));
 
   cout << "MINED " << mined << endl;

@@ -9,6 +9,7 @@
 #include <iomanip>
 #include <bitset>
 #include <sstream>
+#include <bitcoin/system.hpp>
 using namespace std;
 
 const int MIN_VALUE = 1000;
@@ -39,7 +40,7 @@ struct blockChain {
 	string merkelRoot;
 	int nonce;
 	string diff;
-	block block;
+	block blockSTR;
 };
 
 
